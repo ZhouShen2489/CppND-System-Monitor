@@ -7,6 +7,8 @@ class Processor {
 
   // TODO: Declare any necessary private members
  private:
+  float previous_active_jiffies_ = 0.0;
+  float previous_total_jiffies_ = 0.0;
 };
 
 #endif
