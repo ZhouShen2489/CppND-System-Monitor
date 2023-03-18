@@ -20,7 +20,7 @@ const std::string kPasswordPath{"/etc/passwd"};
 
 // System
 float MemoryUtilization();
-long UpTime();
+float UpTime();
 std::vector<int> Pids();
 int TotalProcesses();
 int RunningProcesses();
@@ -52,6 +52,7 @@ std::string Ram(int pid);
 std::string Uid(int pid);
 std::string User(int pid);
 long int UpTime(int pid);
+long int StartTime(int pid); // add a start time of process
 };  // namespace LinuxParser
 
 #endif

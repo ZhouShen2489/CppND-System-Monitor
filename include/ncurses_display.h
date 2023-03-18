@@ -7,7 +7,7 @@
 #include "system.h"
 
 namespace NCursesDisplay {
-void Display(System& system, int n = 10);
+void Display(System& system, int n = 10);  // n (number of processes being shown on the process monitor)
 void DisplaySystem(System& system, WINDOW* window);
 void DisplayProcesses(std::vector<Process>& processes, WINDOW* window, int n);
 std::string ProgressBar(float percent);

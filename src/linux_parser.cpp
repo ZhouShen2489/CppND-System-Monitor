@@ -4,8 +4,11 @@
 #include <vector>
 #include <cassert>
 #include <iostream>
+#include <sstream>
 
 #include "linux_parser.h"
+//it takes the your variable and then by writing (#x) it converts the name of the variable
+#define printVailableNameAndValue(x) std::cout << "The name of variable **" << (#x) << "** and the value of varibale is => " << x << "\n"
 
 using std::stof;
 using std::string;
@@ -37,15 +40,15 @@ string LinuxParser::OperatingSystem() {
 
 // DONE: An example of how to read data from the filesystem
 string LinuxParser::Kernel() {
-  string os, kernel;
+  string os, kernel, version;
   string line;
   std::ifstream stream(kProcDirectory + kVersionFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
     std::istringstream linestream(line);
-    linestream >> os >> kernel;
+    linestream >> os >> kernel >> version;
   }
-  return kernel;
+  return version;
 }
 
 // BONUS: Update this to use std::filesystem
@@ -79,7 +82,7 @@ float LinuxParser::MemoryUtilization() {
   string value;
   std::ifstream filestream(kProcDirectory + kMeminfoFilename);
   if (filestream.is_open()) {
-     while (std::getline(filestream, line)) {
+    while (std::getline(filestream, line)) {
       std::replace(line.begin(), line.end(), ':', ' ');
       std::istringstream linestream(line);
       while (linestream >> key >> value) {
@@ -91,14 +94,14 @@ float LinuxParser::MemoryUtilization() {
         }
       }
     }
+  }
   mem_usage = (total_mem - free_men) / total_mem;
   return mem_usage;
-  }
 }
 
 // TODO: Read and return the system uptime
-long LinuxParser::UpTime() {
-  long up_time = 0;
+float LinuxParser::UpTime() {
+  float up_time = 0;
   string line;
   string time;
   std::ifstream filestream(kProcDirectory + kUptimeFilename);
@@ -106,7 +109,7 @@ long LinuxParser::UpTime() {
     std::getline(filestream, line);
     std::istringstream stringstream(line);
     stringstream >> time;
-    up_time = std::stol(time);
+    up_time = std::stof(time);
   }
   return up_time;
 }
@@ -121,6 +124,9 @@ long LinuxParser::Jiffies() {
 // TODO: Read and return the number of active jiffies for a PID
 // REMOVE: [[maybe_unused]] once you define the function
 long LinuxParser::ActiveJiffies(int pid) {
+
+
+
 
   std::ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
   int iter = 1;
@@ -255,7 +261,8 @@ string LinuxParser::Command(int pid) {
   if (filestream.is_open()) {
     std::getline(filestream, command);
   }
-  return command;
+  string shorten_command = command.substr(0, 50) + "...";
+  return shorten_command;
 }
 
 // TODO: Read and return the memory used by a process
@@ -271,9 +278,9 @@ string LinuxParser::Ram(int pid) {
     while (std::getline(filestream, line)) {
       std::istringstream stringstream(line);
       while (stringstream >> key >> value) {
-        if (key == "VmSize:") {
+        if (key == "VmRSS:") {   //use VmRSS instead of VmSize because VmRSS gives the exact physical memory being used as a part of Physical RAM
           mem_size = value;
-          mem_size = to_string(stol(mem_size) / 1000);
+          mem_size = mem_size.substr(0, mem_size.size() - 3); //
           return mem_size;
         }
       }
@@ -332,17 +339,39 @@ string LinuxParser::User(int pid) {
 long LinuxParser::UpTime(int pid) {
   std::ifstream filestream(LinuxParser::kProcDirectory + to_string(pid) + kStatFilename);
   int iter = 1;
-  long up_time = 0;
+  long system_up_time = LinuxParser::UpTime();
+  long process_up_time = 0;
+  long process_start_time = 0;
+  long hertz = sysconf(_SC_CLK_TCK);
   string item;
   string line;
   while (filestream.is_open()) {
     while (filestream >> item) {
       if (iter == 22) {
-        up_time = stol(item);
-        return up_time;
+        process_start_time = stol(item);
+        process_up_time = system_up_time - (process_start_time / hertz);
+        // printVailableNameAndValue(process_up_time);
+        return process_up_time;
       }
       iter++;
     }
   }
-  return up_time;
+  return process_up_time;
+}
+
+long LinuxParser::StartTime(int pid) {
+  std::ifstream filestream(LinuxParser::kProcDirectory + to_string(pid) + kStatFilename);
+  int iter = 1;
+  long process_start_time = 0;
+  string item;
+  while (filestream.is_open()) {
+    while (filestream >> item) {
+      if (iter == 22) {
+        process_start_time = stol(item);
+        return process_start_time;
+      }
+      iter++;
+    }
+  }
+  return process_start_time;
 }
